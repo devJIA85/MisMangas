@@ -6,18 +6,18 @@
 //
 
 import SwiftUI
-import SwiftData      // acceso a @Query más adelante
+import SwiftData   // SwiftData import reactivado
 
 struct ContentView: View {
     var body: some View {
         NavigationStack {
-            MangaListView()              // ← tu vista principal de la lista
-                .navigationTitle("Mangas")   // título inicial
+            MangaListView()
+                .navigationTitle("Mangas")
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: [UserManga.self], inMemory: true)
+        .modelContainer(for: [UserManga.self], inMemory: true)  // Preview activo con SwiftData
 }

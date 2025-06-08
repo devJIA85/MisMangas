@@ -12,7 +12,7 @@ import SwiftUI
 final class MangaDetailViewModel: ObservableObject {
     @Published private(set) var manga: Manga?
     @Published var isLoading = false
-    @Published var error: Error?
+    @Published var apiError: Error?
 
     private let id: Int
     private let cacheLifespan: TimeInterval = 60 * 60 * 24 * 7 // 1 semana
@@ -49,7 +49,7 @@ final class MangaDetailViewModel: ObservableObject {
                 try? encoded.write(to: url, options: .atomic)
             }
         } catch {
-            self.error = error
+            self.apiError = error
         }
     }
 }
