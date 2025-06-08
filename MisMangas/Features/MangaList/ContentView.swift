@@ -10,9 +10,22 @@ import SwiftData   // SwiftData import reactivado
 
 struct ContentView: View {
     var body: some View {
-        NavigationStack {
-            MangaListView()
-                .navigationTitle("Mangas")
+        TabView {
+            NavigationStack {
+                MangaListView()
+                    .navigationTitle("Mangas")
+            }
+            .tabItem {
+                Label("Mangas", systemImage: "book")
+            }
+
+            NavigationStack {
+                CollectionView()
+                    .navigationTitle("Mi Colección")
+            }
+            .tabItem {
+                Label("Colección", systemImage: "star")
+            }
         }
     }
 }

@@ -19,13 +19,13 @@ import SwiftData
     @Attribute(.unique) var mangaID: Int
 
     /// Indicates if the user has marked this manga as a favorite.
-    var isFavorite: Bool = false
+    @Attribute var isFavorite: Bool = false
 
     /// The last chapter number the user has read.
-    var lastReadChapter: Int? = nil
+    @Attribute var lastReadChapter: Int?
 
     /// Optional personal notes or comments about the manga.
-    var notes: String? = nil
+    @Attribute var notes: String?
 
     // MARK: - Initialization
 

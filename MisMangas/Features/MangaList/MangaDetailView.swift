@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MangaDetailView: View {
     // MARK: - Input
@@ -25,6 +26,15 @@ struct MangaDetailView: View {
         content
             .navigationTitle("Detalle")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        viewModel.toggleFavorite()
+                    } label: {
+                        Image(systemName: viewModel.isFavorite ? "star.fill" : "star")
+                    }
+                }
+            }
             .task {
                 await viewModel.load()
             }

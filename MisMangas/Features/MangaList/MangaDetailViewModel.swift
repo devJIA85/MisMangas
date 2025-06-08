@@ -7,12 +7,14 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
 @MainActor
 final class MangaDetailViewModel: ObservableObject {
     @Published private(set) var manga: Manga?
     @Published var isLoading = false
     @Published var apiError: Error?
+    @Published var isFavorite: Bool = false
 
     private let id: Int
     private let cacheLifespan: TimeInterval = 60 * 60 * 24 * 7 // 1 semana
@@ -51,5 +53,10 @@ final class MangaDetailViewModel: ObservableObject {
         } catch {
             self.apiError = error
         }
+    }
+
+    /// Toggles the favorite flag (stub for UI binding; persistence can be added later)
+    func toggleFavorite() {
+        isFavorite.toggle()
     }
 }
