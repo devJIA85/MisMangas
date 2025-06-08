@@ -66,4 +66,32 @@ final class APIService {
             throw APIError.decodingFailed
         }
     }
+    
+    /// GET /manga/{id} – Fetch single manga detail
+    func fetchManga(id: Int) async throws -> Manga {
+        let url = Constants.baseURL.appendingPathComponent("/manga/\(id)")
+        
+        var request = URLRequest(url: url)
+        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
+        
+        guard let http = response as? HTTPURLResponse,
+              (200..<300).contains(http.statusCode) else {
+            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
+        }
+        
+        do {
+            return try decoder.decode(Manga.self, from: data)
+        } catch {
+            if let decodingError = error as? DecodingError {
+                print("🛑 DecodingError:", decodingError)
+            } else {
+                print("🛑 Error al decodificar:", error.localizedDescription)
+            }
+            throw APIError.decodingFailed
+        }
+    }
 }
