@@ -32,5 +32,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [UserManga.self], inMemory: true)  // Preview activo con SwiftData
+        .modelContainer(for: UserManga.self, inMemory: true)  // Preview activo con SwiftData
 }

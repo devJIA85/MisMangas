@@ -14,6 +14,7 @@ struct MangaDetailView: View {
     
     // MARK: - State
     @StateObject private var viewModel: MangaDetailViewModel
+    @Environment(\.modelContext) private var context
     
     // MARK: - Init
     init(id: Int) {
@@ -29,7 +30,7 @@ struct MangaDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        viewModel.toggleFavorite()
+                        viewModel.toggleFavorite(in: context)
                     } label: {
                         Image(systemName: viewModel.isFavorite ? "star.fill" : "star")
                     }

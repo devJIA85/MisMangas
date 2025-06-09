@@ -55,8 +55,35 @@ final class MangaDetailViewModel: ObservableObject {
         }
     }
 
-    /// Toggles the favorite flag (stub for UI binding; persistence can be added later)
-    func toggleFavorite() {
-        isFavorite.toggle()
+    /// Toggles the favorite state in SwiftData.
+    func toggleFavorite(in context: ModelContext) {
+        let targetID = id
+        // Build a fetch descriptor for any existing UserManga with this id
+        let descriptor = FetchDescriptor<UserManga>(
+            predicate: #Predicate { $0.mangaID == targetID }
+        )
+        if let existing = try? context.fetch(descriptor).first {
+            // If it exists, delete it (un-favorite)
+            context.delete(existing)
+            isFavorite = false
+        } else {
+            // Otherwise insert a new record (favorite)
+            let entry = UserManga(mangaID: id)
+            context.insert(entry)
+            isFavorite = true
+        }
+    }
+
+    /// Loads the current favorite state from SwiftData.
+    func checkFavorite(in context: ModelContext) {
+        let targetID = id
+        let descriptor = FetchDescriptor<UserManga>(
+            predicate: #Predicate { $0.mangaID == targetID }
+        )
+        if let existing = try? context.fetch(descriptor).first {
+            isFavorite = existing.isFavorite
+        } else {
+            isFavorite = false
+        }
     }
 }

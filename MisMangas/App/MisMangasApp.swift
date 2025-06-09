@@ -45,8 +45,8 @@ import SwiftData
 struct MisMangasApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()                // ← ahora arranca en ContentView
+            ContentView()
+                .modelContainer(for: UserManga.self)
         }
-        .modelContainer(for: [UserManga.self])  // SwiftData disponible en toda la jerarquía
     }
 }

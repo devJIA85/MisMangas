@@ -6,19 +6,38 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MangaListView: View {
     // ① Instancia del ViewModel
     @StateObject private var viewModel = MangaListViewModel()
+    @Environment(\.modelContext) private var context
+    @Query(sort: [SortDescriptor<UserManga>(\.mangaID, order: .forward)]) private var userMangas: [UserManga]
 
     var body: some View {
         List {
             // ② Iteramos sobre los mangas filtrados
             ForEach(viewModel.filteredMangas) { manga in
-                Text(manga.title)
+                HStack {
+                    NavigationLink(value: manga.id) {
+                        Text(manga.title)
+                    }
                     .onAppear {                               // ③ Paginación
                         Task { await viewModel.loadMoreIfNeeded(currentItem: manga) }
                     }
+                    Spacer()
+                    Button {
+                        if let entry = userMangas.first(where: { $0.mangaID == manga.id }) {
+                            context.delete(entry)
+                        } else {
+                            context.insert(UserManga(mangaID: manga.id))
+                        }
+                    } label: {
+                        Image(systemName: userMangas.contains(where: { $0.mangaID == manga.id }) ? "star.fill" : "star")
+                            .foregroundColor(.yellow)
+                    }
+                    .buttonStyle(BorderlessButtonStyle())
+                }
             }
             if viewModel.isLoading && !viewModel.mangas.isEmpty {
                 Section {
