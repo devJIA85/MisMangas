@@ -48,7 +48,7 @@ final class MangaDetailViewModel: ObservableObject {
             let fresh = try await APIService.shared.fetchManga(id: id)
             manga = fresh
             if let encoded = try? JSONEncoder().encode(fresh) {
-                try? encoded.write(to: url, options: .atomic)
+                try? encoded.write(to: url, options: .atomicWrite)
             }
         } catch {
             self.apiError = error

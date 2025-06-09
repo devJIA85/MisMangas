@@ -25,6 +25,7 @@ struct MangaDetailView: View {
     // MARK: - View body
     var body: some View {
         content
+            .loadingOverlay(isPresented: viewModel.isLoading)
             .navigationTitle("Detalle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -36,17 +37,17 @@ struct MangaDetailView: View {
                     }
                 }
             }
+            // Load the manga and check if it's already favorited
             .task {
                 await viewModel.load()
+                viewModel.checkFavorite(in: context)
             }
     }
     
     // MARK: - Private helpers
     @ViewBuilder
     private var content: some View {
-        if viewModel.isLoading {
-            ProgressView("Cargando manga…")
-        } else if let error = viewModel.apiError {
+        if let error = viewModel.apiError {
             VStack(spacing: 12) {
                 Text("Error al cargar el manga.")
                     .font(.headline)

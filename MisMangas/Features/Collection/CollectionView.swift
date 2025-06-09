@@ -24,11 +24,11 @@ struct CollectionView: View {
 
     // MARK: - UI Body
     var body: some View {
-        NavigationStack {
+        NavigationView {
             List {
                 ForEach(userMangas) { entry in
                     // Navega al detalle externo reusando MangaDetailView
-                    NavigationLink(value: entry.mangaID) {
+                    NavigationLink(destination: MangaDetailView(id: entry.mangaID)) {
                         HStack(spacing: 12) {
                             // Icono de favorito
                             Image(systemName: entry.isFavorite ? "star.fill" : "star")
@@ -55,9 +55,6 @@ struct CollectionView: View {
                 // Botón de edición (eliminar)
                 EditButton()
             }
-            .navigationDestination(for: Int.self) { mangaID in
-                MangaDetailView(id: mangaID)
-            }
         }
     }
 
@@ -74,6 +71,8 @@ struct CollectionView: View {
 
 // MARK: - Preview
 #Preview {
-    CollectionView()
-        .modelContainer(for: UserManga.self, inMemory: true)
+    NavigationView {
+        CollectionView()
+            .modelContainer(for: UserManga.self, inMemory: true)
+    }
 }
