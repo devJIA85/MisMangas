@@ -67,30 +67,41 @@ struct SearchView: View {
                 if !viewModel.mangas.isEmpty {
                     Section("Resultados") {
                         ForEach(viewModel.mangas, id: \.id) { manga in
-                            NavigationLink {
-                                MangaDetailView(viewModel: MangaDetailViewModel(
-                                    id: manga.id,
-                                    title: manga.title,
-                                    coverURL: URL(string: manga.mainPicture),
-                                    synopsis: manga.sypnosis,
-                                    genres: manga.genres.map(\.genre),
-                                    authors: manga.authors.map { "\($0.firstName) \($0.lastName)" },
-                                    demographic: manga.demographics.first?.demographic,
-                                    themes: manga.themes.map(\.theme),
-                                    chapters: manga.chapters,
-                                    volumes: manga.volumes,
-                                    score: manga.score,
-                                    status: manga.status,
-                                    container: viewModel.container
-                                ))
-                            } label: {
-                                Text(manga.title)
-                            }
+                            SearchResultRow(manga: manga, container: viewModel.container)
                         }
                     }
                 }
             }
             .navigationTitle("Búsqueda avanzada")
+        }
+    }
+}
+
+private struct SearchResultRow: View {
+    let manga: Manga
+    let container: ModelContainer
+
+    var body: some View {
+        NavigationLink {
+            MangaDetailView(
+                viewModel: MangaDetailViewModel(
+                    id: manga.id,
+                    title: manga.title,
+                    coverURL: URL(string: manga.mainPicture),
+                    synopsis: manga.sypnosis,
+                    genres: manga.genres.map(\.genre),
+                    authors: manga.authors.map { "\($0.firstName) \($0.lastName)" },
+                    demographic: manga.demographics.first?.demographic,
+                    themes: manga.themes.map(\.theme),
+                    chapters: manga.chapters,
+                    volumes: manga.volumes,
+                    score: manga.score,
+                    status: manga.status,
+                    container: container
+                )
+            )
+        } label: {
+            Text(manga.title)
         }
     }
 }
