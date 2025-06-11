@@ -77,8 +77,9 @@ class MangaDetailViewModel: ObservableObject {
     // MARK: - User Collection Logic
 
     func addOrUpdateUserManga() {
+        let mangaID = id
         let desc = FetchDescriptor<UserManga>(
-            predicate: #Predicate { $0.mangaID == self.id }
+            predicate: #Predicate { $0.mangaID == mangaID }
         )
         if let entry = try? context.fetch(desc).first {
             // Update
@@ -104,8 +105,9 @@ class MangaDetailViewModel: ObservableObject {
     }
 
     func checkIfCached() {
+        let mangaID = id
         let desc = FetchDescriptor<UserManga>(
-            predicate: #Predicate { $0.mangaID == self.id }
+            predicate: #Predicate { $0.mangaID == mangaID }
         )
         if let entry = try? context.fetch(desc).first {
             isFavorite = entry.isFavorite
@@ -123,8 +125,9 @@ class MangaDetailViewModel: ObservableObject {
     }
 
     func removeFromUserCollection() {
+        let mangaID = id
         let desc = FetchDescriptor<UserManga>(
-            predicate: #Predicate { $0.mangaID == self.id }
+            predicate: #Predicate { $0.mangaID == mangaID }
         )
         if let entry = try? context.fetch(desc).first {
             context.delete(entry)
