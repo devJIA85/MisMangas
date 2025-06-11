@@ -2,7 +2,7 @@
 //  MangaDetailViewModel.swift
 //  MisMangas
 //
-//  Created by Juan Ignacio Antolini on 08/06/2025.
+//  Created by Juan Ignacio Antolini on 10/06/2025.
 //
 
 import Foundation
@@ -10,80 +10,139 @@ import SwiftUI
 import SwiftData
 
 @MainActor
-final class MangaDetailViewModel: ObservableObject {
-    @Published private(set) var manga: Manga?
-    @Published var isLoading = false
-    @Published var apiError: Error?
+class MangaDetailViewModel: ObservableObject {
+    // MARK: - Inputs
+    let id: Int
+    let title: String
+    let coverURL: URL?
+    let synopsis: String?
+    let genres: [String]
+    let authors: [String]
+    let demographic: String?
+    let themes: [String]
+    let chapters: Int?
+    let volumes: Int?
+    let score: Double?
+    let status: String?
+
+    // MARK: - Estado (UserManga)
     @Published var isFavorite: Bool = false
+    @Published var isComplete: Bool = false
+    @Published var volumesOwnedCount: Int = 0
+    @Published var readingVolume: Int = 0
 
-    private let id: Int
-    private let cacheLifespan: TimeInterval = 60 * 60 * 24 * 7 // 1 semana
+    // MARK: - Estado remoto/cache
+    @Published var isLoading: Bool = false
+    @Published var apiError: Error? = nil
+    @Published var loadedManga: Manga? = nil
+    @Published var isCached: Bool = false
 
-    init(id: Int) {
+    // MARK: - SwiftData
+    private let container: ModelContainer
+    private let context: ModelContext
+
+    // MARK: - Init
+    init(
+        id: Int,
+        title: String,
+        coverURL: URL?,
+        synopsis: String?,
+        genres: [String],
+        authors: [String],
+        demographic: String?,
+        themes: [String],
+        chapters: Int?,
+        volumes: Int?,
+        score: Double?,
+        status: String?,
+        container: ModelContainer
+    ) {
         self.id = id
+        self.title = title
+        self.coverURL = coverURL
+        self.synopsis = synopsis
+        self.genres = genres
+        self.authors = authors
+        self.demographic = demographic
+        self.themes = themes
+        self.chapters = chapters
+        self.volumes = volumes
+        self.score = score
+        self.status = status
+        self.container = container
+        self.context = container.mainContext
+        self.checkIfCached()
     }
 
-    private var cacheURL: URL {
-        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        return caches.appendingPathComponent("manga_\(id).json")
-    }
+    // MARK: - User Collection Logic
 
-    func load() async {
-        isLoading = true
-        defer { isLoading = false }
-
-        let url = cacheURL
-        if
-            let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
-            let created = attrs[.creationDate] as? Date,
-            Date().timeIntervalSince(created) < cacheLifespan,
-            let data = try? Data(contentsOf: url),
-            let cached = try? JSONDecoder().decode(Manga.self, from: data)
-        {
-            manga = cached
-            return
-        }
-
-        do {
-            let fresh = try await APIService.shared.fetchManga(id: id)
-            manga = fresh
-            if let encoded = try? JSONEncoder().encode(fresh) {
-                try? encoded.write(to: url, options: .atomicWrite)
-            }
-        } catch {
-            self.apiError = error
-        }
-    }
-
-    /// Toggles the favorite state in SwiftData.
-    func toggleFavorite(in context: ModelContext) {
-        let targetID = id
-        // Build a fetch descriptor for any existing UserManga with this id
-        let descriptor = FetchDescriptor<UserManga>(
-            predicate: #Predicate { $0.mangaID == targetID }
+    func addOrUpdateUserManga() {
+        let desc = FetchDescriptor<UserManga>(
+            predicate: #Predicate { $0.mangaID == self.id }
         )
-        if let existing = try? context.fetch(descriptor).first {
-            // If it exists, delete it (un-favorite)
-            context.delete(existing)
-            isFavorite = false
+        if let entry = try? context.fetch(desc).first {
+            // Update
+            entry.isFavorite = isFavorite
+            entry.isComplete = isComplete
+            entry.volumesOwnedCount = volumesOwnedCount
+            entry.readingVolume = readingVolume
         } else {
-            // Otherwise insert a new record (favorite)
-            let entry = UserManga(mangaID: id)
+            // Insert
+            let entry = UserManga(
+                mangaID: id,
+                isFavorite: isFavorite,
+                lastReadChapter: nil,
+                notes: nil,
+                isComplete: isComplete,
+                volumesOwnedCount: volumesOwnedCount,
+                readingVolume: readingVolume
+            )
             context.insert(entry)
-            isFavorite = true
+        }
+        try? context.save()
+        checkIfCached()
+    }
+
+    func checkIfCached() {
+        let desc = FetchDescriptor<UserManga>(
+            predicate: #Predicate { $0.mangaID == self.id }
+        )
+        if let entry = try? context.fetch(desc).first {
+            isFavorite = entry.isFavorite
+            isComplete = entry.isComplete
+            volumesOwnedCount = entry.volumesOwnedCount
+            readingVolume = entry.readingVolume ?? 0
+            isCached = true
+        } else {
+            isFavorite = false
+            isComplete = false
+            volumesOwnedCount = 0
+            readingVolume = 0
+            isCached = false
         }
     }
 
-    /// Loads the current favorite state from SwiftData.
-    func checkFavorite(in context: ModelContext) {
-        let targetID = id
-        let descriptor = FetchDescriptor<UserManga>(
-            predicate: #Predicate { $0.mangaID == targetID }
+    func removeFromUserCollection() {
+        let desc = FetchDescriptor<UserManga>(
+            predicate: #Predicate { $0.mangaID == self.id }
         )
-        if let existing = try? context.fetch(descriptor).first {
-            isFavorite = existing.isFavorite
-        } else {
-            isFavorite = false
+        if let entry = try? context.fetch(desc).first {
+            context.delete(entry)
+            try? context.save()
+            isCached = false
         }
+    }
+
+    // MARK: - API Logic
+    func fetchRemoteManga() async {
+        isLoading = true
+        apiError = nil
+        do {
+            let manga = try await APIService.shared.fetchManga(id: id)
+            loadedManga = manga
+        } catch {
+            apiError = error
+        }
+        isLoading = false
     }
 }

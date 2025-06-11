@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
-import SwiftData   // SwiftData import reactivado
+import SwiftData
 
 struct ContentView: View {
+    @StateObject private var collectionVM = CollectionViewModel()
+
     var body: some View {
         TabView {
             NavigationStack {
@@ -20,8 +22,9 @@ struct ContentView: View {
             }
 
             NavigationStack {
-                CollectionView()
-                    .navigationTitle("Mi Colección")
+                // NO pases el container explícitamente, solo el viewModel si hace falta
+                CollectionView(viewModel: collectionVM)
+                    .navigationTitle("Colección")
             }
             .tabItem {
                 Label("Colección", systemImage: "star")
@@ -32,5 +35,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: UserManga.self, inMemory: true)  // Preview activo con SwiftData
+        .modelContainer(for: UserManga.self, inMemory: true)
 }

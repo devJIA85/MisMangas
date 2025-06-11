@@ -1,50 +1,25 @@
+// APIService.swift
+// MisMangas
 //
-//  APIService.swift
-//  MisMangas
-//
-//  Created by Juan Ignacio Antolini on 06/06/2025.
-//
+// Created by Juan Ignacio Antolini on 06/06/2025.
 
 import Foundation
 
-/// Servicio encargado de manejar las llamadas a la API relacionadas con mangas y autores.
-/// Provee métodos para obtener listas paginadas, detalles específicos y búsquedas.
+/// Errores posibles de la API de MisMangas.
 enum APIError: Error {
-    case invalidURL, requestFailed, decodingFailed, statusCode(Int)
+    case invalidURL
+    case statusCode(Int)
+    case decodingFailed
+    case requestFailed(Error)
 }
 
-// MARK: - Search Endpoint
-extension APIService {
-    /// POST /manga – Búsqueda multipropósito con filtros
-    func searchMangas(_ customSearch: CustomSearch, page: Int = 1, per: Int = 10) async throws -> PaginatedResponse<Manga> {
-        // 1. Construir URL del endpoint
-        let url = Constants.baseURL.appendingPathComponent("/manga")
-        // 2. Configurar la petición HTTP
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        // 3. Codificar el cuerpo de la petición
-        let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-        let bodyData = try encoder.encode(customSearch)
-        request.httpBody = bodyData
-        // 4. Ejecutar la petición
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
-        // 5. Decodificar respuesta
-        return try decoder.decode(PaginatedResponse<Manga>.self, from: data)
-    }
-}
-
+/// Servicio encargado de manejar las llamadas a la API de mangas y autores.
 final class APIService {
+    /// Instancia compartida para acceder al servicio desde cualquier parte de la app.
     static let shared = APIService()
     private init() {}
 
+    /// JSONDecoder configurado para convertir snake_case y decodificar fechas ISO8601.
     private let decoder: JSONDecoder = {
         let d = JSONDecoder()
         d.keyDecodingStrategy = .convertFromSnakeCase
@@ -52,312 +27,146 @@ final class APIService {
         return d
     }()
 
-    /// GET /manga/{id} — Devuelve el detalle de un manga
-    func fetchManga(id: Int) async throws -> Manga {
-      let url = Constants.baseURL.appendingPathComponent("/manga/\(id)")
-      var request = URLRequest(url: url)
-      request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-      let (data, response) = try await URLSession.shared.data(for: request)
-      guard let http = response as? HTTPURLResponse,
-            (200..<300).contains(http.statusCode) else {
-        throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-      }
-      do {
-        return try decoder.decode(Manga.self, from: data)
-      } catch {
-        print("🛑 Error al decodificar detalle de manga:", error.localizedDescription)
-        throw APIError.decodingFailed
-      }
-    }
-}
+    // MARK: - Endpoints de listados REST
 
-// MARK: - List Endpoints
-extension APIService {
-    /// GET /list/mangas – Obtiene todos los mangas sin filtros
-    /// - Returns: Lista completa de mangas
-    func fetchAllMangas() async throws -> [Manga] {
-        let url = Constants.baseURL.appendingPathComponent("/list/mangas")
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
+    /// GET /list/mangas?page=...&per=... – Lista paginada de mangas con metadata.
+    /// - Parameter page: número de página (por defecto 1)
+    /// - Parameter per: elementos por página (por defecto 10)
+    /// - Returns: `PaginatedResponse<Manga>` con metadata y datos
+    func fetchAllMangas(page: Int = 1, per: Int = 10) async throws -> PaginatedResponse<Manga> {
+        guard var comps = URLComponents(url: Constants.baseURL.appendingPathComponent("/list/mangas"), resolvingAgainstBaseURL: false) else {
+            throw APIError.invalidURL
         }
-        do {
-            return try self.decoder.decode([Manga].self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchAllMangas:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchAllMangas:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+        comps.queryItems = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "per",  value: String(per))
+        ]
+        let url = comps.url!
+        return try await performRequest(url)
     }
 
-    /// GET /list/bestMangas – Obtiene los mangas mejor valorados
-    /// - Returns: Lista completa de mangas mejor valorados
-    func fetchBestMangas() async throws -> [Manga] {
-        let url = Constants.baseURL.appendingPathComponent("/list/bestMangas")
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
+    /// GET /list/bestMangas?page=...&per=... – Mangas mejor valorados.
+    /// - Parameter page: página (por defecto 1)
+    /// - Parameter per: elementos por página (por defecto 10)
+    /// - Returns: un arreglo de `Manga` ordenado por puntuación
+    func fetchBestMangas(page: Int = 1, per: Int = 10) async throws -> PaginatedResponse<Manga> {
+        guard var comps = URLComponents(url: Constants.baseURL.appendingPathComponent("/list/bestMangas"), resolvingAgainstBaseURL: false) else {
+            throw APIError.invalidURL
         }
-        do {
-            return try self.decoder.decode([Manga].self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchBestMangas:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchBestMangas:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+        comps.queryItems = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "per",  value: String(per))
+        ]
+        return try await performRequest(comps.url!)
     }
-
-    /// GET /list/authors – Obtiene lista simple de nombres de autores
-    /// - Returns: Lista de nombres de autores
-    func fetchAuthorsList() async throws -> [String] {
+    
+    /// GET /list/authors – Lista de todos los autores (no paginada).
+    func fetchAuthorsList() async throws -> [Author] {
         let url = Constants.baseURL.appendingPathComponent("/list/authors")
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
-        do {
-            return try self.decoder.decode([String].self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchAuthorsList:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchAuthorsList:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+        return try await performArrayRequest(url)
     }
 
-    /// GET /list/demographics – Obtiene lista de demografías disponibles
-    /// - Returns: Lista de demografías
+    /// GET /list/demographics – Array de cadenas con demografías.
     func fetchDemographics() async throws -> [String] {
         let url = Constants.baseURL.appendingPathComponent("/list/demographics")
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
-        do {
-            return try self.decoder.decode([String].self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchDemographics:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchDemographics:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+        return try await performArrayRequest(url)
     }
 
-    /// GET /list/genres – Obtiene lista de géneros disponibles
-    /// - Returns: Lista de géneros
+    /// GET /list/genres – Array de cadenas con géneros.
     func fetchGenres() async throws -> [String] {
         let url = Constants.baseURL.appendingPathComponent("/list/genres")
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
-        do {
-            return try self.decoder.decode([String].self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchGenres:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchGenres:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+        return try await performArrayRequest(url)
     }
 
-    /// GET /list/themes – Obtiene lista de temáticas disponibles
-    /// - Returns: Lista de temáticas
+    /// GET /list/themes – Array de cadenas con temáticas.
     func fetchThemes() async throws -> [String] {
         let url = Constants.baseURL.appendingPathComponent("/list/themes")
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
-        do {
-            return try self.decoder.decode([String].self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchThemes:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchThemes:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+        return try await performArrayRequest(url)
     }
 
-    /// GET /list/mangaByGenre/{genre} – Obtiene mangas por género
-    /// - Parameter genre: nombre del género
-    /// - Returns: respuesta paginada con lista de mangas del género
-    func fetchMangasByGenre(_ genre: String, page: Int = 1, per: Int = 10) async throws -> PaginatedResponse<Manga> {
-        var components = URLComponents(
-            url: Constants.baseURL.appendingPathComponent("/list/mangaByGenre/\(genre)"),
-            resolvingAgainstBaseURL: false
-        )
-        components?.queryItems = [
-            URLQueryItem(name: "page", value: "\(page)"),
-            URLQueryItem(name: "per", value: "\(per)")
-        ]
-        guard let url = components?.url else {
-            throw APIError.invalidURL
-        }
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
-        do {
-            return try self.decoder.decode(PaginatedResponse<Manga>.self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchMangasByGenre:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchMangasByGenre:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+    /// GET /list/mangaByGenre/{genre} – Mangas de un género específico.
+    func fetchMangasByGenre(_ genre: String) async throws -> [Manga] {
+        let url = Constants.baseURL.appendingPathComponent("/list/mangaByGenre/\(genre)")
+        return try await performArrayRequest(url)
     }
 
-    /// GET /list/mangaByDemographic/{demo} – Obtiene mangas por demografía
-    /// - Parameter demo: nombre de la demografía
-    /// - Returns: respuesta paginada con lista de mangas de esa demografía
-    func fetchMangasByDemographic(_ demo: String, page: Int = 1, per: Int = 10) async throws -> PaginatedResponse<Manga> {
-        var components = URLComponents(
-            url: Constants.baseURL.appendingPathComponent("/list/mangaByDemographic/\(demo)"),
-            resolvingAgainstBaseURL: false
-        )
-        components?.queryItems = [
-            URLQueryItem(name: "page", value: "\(page)"),
-            URLQueryItem(name: "per", value: "\(per)")
-        ]
-        guard let url = components?.url else {
-            throw APIError.invalidURL
-        }
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
-        do {
-            return try self.decoder.decode(PaginatedResponse<Manga>.self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchMangasByDemographic:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchMangasByDemographic:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+    /// GET /list/mangaByDemographic/{demo} – Mangas de una demografía.
+    func fetchMangasByDemographic(_ demo: String) async throws -> [Manga] {
+        let url = Constants.baseURL.appendingPathComponent("/list/mangaByDemographic/\(demo)")
+        return try await performArrayRequest(url)
     }
 
-    /// GET /list/mangaByTheme/{theme} – Obtiene mangas por temática
-    /// - Parameter theme: nombre de la temática
-    /// - Returns: respuesta paginada con lista de mangas de esa temática
-    func fetchMangasByTheme(_ theme: String, page: Int = 1, per: Int = 10) async throws -> PaginatedResponse<Manga> {
-        var components = URLComponents(
-            url: Constants.baseURL.appendingPathComponent("/list/mangaByTheme/\(theme)"),
-            resolvingAgainstBaseURL: false
-        )
-        components?.queryItems = [
-            URLQueryItem(name: "page", value: "\(page)"),
-            URLQueryItem(name: "per", value: "\(per)")
-        ]
-        guard let url = components?.url else {
-            throw APIError.invalidURL
-        }
-        var request = URLRequest(url: url)
-        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
-            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
-        do {
-            return try self.decoder.decode(PaginatedResponse<Manga>.self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchMangasByTheme:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchMangasByTheme:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+    /// GET /list/mangaByTheme/{theme} – Mangas de una temática.
+    func fetchMangasByTheme(_ theme: String) async throws -> [Manga] {
+        let url = Constants.baseURL.appendingPathComponent("/list/mangaByTheme/\(theme)")
+        return try await performArrayRequest(url)
     }
 
-    /// GET /list/mangaByAuthor/{authorID} – Obtiene mangas por autor
-    /// - Parameter authorID: identificador del autor
-    /// - Returns: respuesta paginada con lista de mangas del autor
-    func fetchMangasByAuthor(_ authorID: Int, page: Int = 1, per: Int = 10) async throws -> PaginatedResponse<Manga> {
-        var components = URLComponents(
-            url: Constants.baseURL.appendingPathComponent("/list/mangaByAuthor/\(authorID)"),
-            resolvingAgainstBaseURL: false
-        )
-        components?.queryItems = [
-            URLQueryItem(name: "page", value: "\(page)"),
-            URLQueryItem(name: "per", value: "\(per)")
-        ]
-        guard let url = components?.url else {
-            throw APIError.invalidURL
-        }
+    /// GET /list/mangaByAuthor/{authorID} – Mangas de un autor.
+    func fetchMangasByAuthor(_ authorID: String) async throws -> [Manga] {
+        let url = Constants.baseURL.appendingPathComponent("/list/mangaByAuthor/\(authorID)")
+        return try await performArrayRequest(url)
+    }
+
+    // MARK: - Endpoints auxiliares de búsqueda y detalle
+
+    /// GET /search/mangasBeginsWith/{prefix} – Mangas cuyo título empieza por prefix.
+    func fetchMangasBeginsWith(_ prefix: String) async throws -> PaginatedResponse<Manga> {
+        let url = Constants.baseURL.appendingPathComponent("/search/mangasBeginsWith/\(prefix)")
+        return try await performRequest(url)
+    }
+
+    /// GET /search/mangasContains/{substring} – Mangas que contienen substring.
+    func fetchMangasContains(_ substring: String) async throws -> PaginatedResponse<Manga> {
+        let url = Constants.baseURL.appendingPathComponent("/search/mangasContains/\(substring)")
+        return try await performRequest(url)
+    }
+
+    /// GET /search/author/{name} – Autores que coinciden con nombre.
+    func fetchAuthors(matching name: String) async throws -> [Author] {
+        let url = Constants.baseURL.appendingPathComponent("/search/author/\(name)")
+        return try await performArrayRequest(url)
+    }
+
+    /// GET /manga/{id} – Detalle de un manga por ID exacto.
+    func fetchManga(id: Int) async throws -> Manga {
+        let url = Constants.baseURL.appendingPathComponent("/manga/\(id)")
+        return try await performRequest(url)
+    }
+
+    /// POST /search/manga – Búsqueda multipropósito con filtros.
+    func searchMangas(
+        customSearch: CustomSearch,
+        page: Int = 1,
+        per: Int = 10
+    ) async throws -> PaginatedResponse<Manga> {
+        let url = Constants.baseURL.appendingPathComponent("/search/manga")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(customSearch)
+        return try await performRequest(url)
+    }
+
+    // MARK: - Helpers genéricos de petición
+
+    /// Ejecuta petición GET y decodifica a un tipo Decodable.
+    func performRequest<T: Decodable>(_ url: URL) async throws -> T {
         var request = URLRequest(url: url)
         request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
         let (data, response) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8) ?? "⚠️ No se pudo convertir data a String")
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
         }
-        do {
-            return try self.decoder.decode(PaginatedResponse<Manga>.self, from: data)
-        } catch {
-            if let decodingError = error as? DecodingError {
-                print("🛑 DecodingError en fetchMangasByAuthor:", decodingError)
-            } else {
-                print("🛑 Error al decodificar fetchMangasByAuthor:", error.localizedDescription)
-            }
-            throw APIError.decodingFailed
-        }
+        return try decoder.decode(T.self, from: data)
+    }
+
+    /// Ejecuta petición GET y decodifica a un array.
+    func performArrayRequest<T: Decodable>(_ url: URL) async throws -> [T] {
+        return try await performRequest(url)
     }
 }
 
 
-// MARK: - Implementación de protocolo para servicio de géneros
 extension APIService: GenresServiceProtocol {}

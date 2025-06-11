@@ -1,109 +1,87 @@
-//
-//  MangaDetailView.swift
-//  MisMangas
-//
-//  Created by Juan Ignacio Antolini on 08/06/2025.
-//
-
 import SwiftUI
 import SwiftData
 
 struct MangaDetailView: View {
-    // MARK: - Input
-    let id: Int
-    
-    // MARK: - State
-    @StateObject private var viewModel: MangaDetailViewModel
-    @Environment(\.modelContext) private var context
-    
-    // MARK: - Init
-    init(id: Int) {
-        self.id = id
-        _viewModel = StateObject(wrappedValue: MangaDetailViewModel(id: id))
-    }
-    
-    // MARK: - View body
+    @ObservedObject var viewModel: MangaDetailViewModel
+
     var body: some View {
-        content
-            .loadingOverlay(isPresented: viewModel.isLoading)
-            .navigationTitle("Detalle")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        viewModel.toggleFavorite(in: context)
-                    } label: {
-                        Image(systemName: viewModel.isFavorite ? "star.fill" : "star")
-                    }
+        VStack(alignment: .leading, spacing: 12) {
+            if let url = viewModel.coverURL {
+                AsyncImage(url: url) { image in
+                    image.resizable()
+                         .aspectRatio(contentMode: .fit)
+                } placeholder: {
+                    ProgressView()
                 }
+                .frame(height: 220)
+                .cornerRadius(10)
             }
-            // Load the manga and check if it's already favorited
-            .task {
-                await viewModel.load()
-                viewModel.checkFavorite(in: context)
+
+            Text(viewModel.title)
+                .font(.largeTitle).bold()
+            if let author = viewModel.authors.first {
+                Text("Autor: \(author)")
             }
-    }
-    
-    // MARK: - Private helpers
-    @ViewBuilder
-    private var content: some View {
-        if let error = viewModel.apiError {
-            VStack(spacing: 12) {
-                Text("Error al cargar el manga.")
-                    .font(.headline)
-                Text(error.localizedDescription)
-                    .font(.caption)
-                    .multilineTextAlignment(.center)
+            if let demo = viewModel.demographic {
+                Text("Demografía: \(demo)")
             }
-            .padding()
-        } else if let manga = viewModel.manga {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Title
-                    Text(manga.title)
-                        .font(.title)
-                        .bold()
-                    
-                    // English title (optional)
-                    if let english = manga.titleEnglish, !english.isEmpty {
-                        Text("Título en inglés: \(english)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    // Score (optional)
-                    if let score = manga.score {
-                        Text("Score: \(String(format: "%.2f", score))")
-                            .font(.headline)
-                    }
-                    
-                    // Synopsis
-                    Text("Sinopsis:")
-                        .font(.headline)
-                    Text(manga.sypnosis ?? "Sin sinopsis disponible.")
-                        .font(.body)
-                        .fixedSize(horizontal: false, vertical: true)
-                    
-                    // Main picture
-                    if
-                        let urlString = manga.mainPicture?
-                            .trimmingCharacters(in: CharacterSet(charactersIn: "\"")),
-                        let url = URL(string: urlString)
-                    {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                        } placeholder: {
-                            ProgressView()
-                        }
-                        .frame(maxHeight: 300)
-                    }
+            if let genre = viewModel.genres.first {
+                Text("Género: \(genre)")
+            }
+            if let theme = viewModel.themes.first {
+                Text("Temática: \(theme)")
+            }
+            if let status = viewModel.status {
+                Text("Estado: \(status)")
+            }
+            if let chapters = viewModel.chapters {
+                Text("Capítulos: \(chapters)")
+            }
+            if let volumes = viewModel.volumes {
+                Text("Volúmenes: \(volumes)")
+            }
+            if let score = viewModel.score {
+                Text("Puntaje: \(score, specifier: "%.2f")")
+            }
+            if let synopsis = viewModel.synopsis {
+                Text(synopsis)
+                    .font(.body)
+            }
+
+            Spacer()
+
+            HStack {
+                Button(action: {
+                    viewModel.isFavorite.toggle()
+                    viewModel.addOrUpdateUserManga()
+                }) {
+                    Image(systemName: viewModel.isFavorite ? "star.fill" : "star")
+                        .foregroundColor(.yellow)
+                    Text(viewModel.isFavorite ? "Favorito" : "Agregar a favoritos")
                 }
-                .padding()
+
+                Button(action: {
+                    viewModel.removeFromUserCollection()
+                }) {
+                    Image(systemName: "trash")
+                    Text("Quitar de colección")
+                }
+                .foregroundColor(.red)
             }
-        } else {
-            Text("No se encontró el manga.")
+
+            if viewModel.isLoading {
+                ProgressView("Cargando manga...")
+            }
+            if let error = viewModel.apiError {
+                Text("Ocurrió un error: \(error.localizedDescription)")
+                    .foregroundColor(.red)
+            }
+        }
+        .padding()
+        .onAppear {
+            Task {
+                await viewModel.fetchRemoteManga()
+            }
         }
     }
 }

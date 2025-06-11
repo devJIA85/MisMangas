@@ -10,71 +10,60 @@
 import Foundation
 import SwiftData
 
-/// A SwiftData model representing a manga entry belonging to the user.
-/// Conforms to `Identifiable` for easy use in SwiftUI lists.
-@Model class UserManga: Codable, Identifiable {
-    // MARK: - Persistent Attributes
-
-    /// Unique identifier for the manga (e.g., the API ID).
+@Model
+final class UserManga {
     @Attribute(.unique) var mangaID: Int
+    var isFavorite: Bool
+    var lastReadChapter: Int?
+    var notes: String?
+    var isComplete: Bool
+    var volumesOwnedCount: Int
+    var readingVolume: Int?
 
-    /// Indicates if the user has marked this manga as a favorite.
-    @Attribute var isFavorite: Bool = false
-
-    /// The last chapter number the user has read.
-    @Attribute var lastReadChapter: Int?
-
-    /// Optional personal notes or comments about the manga.
-    @Attribute var notes: String?
-
-    // MARK: - Initialization
-
-    /// Creates a new `UserManga` instance for persistence.
-    ///
-    /// - Parameters:
-    ///   - mangaID: The unique ID of the manga.
-    ///   - isFavorite: Initial favorite state (defaults to `false`).
-    ///   - lastReadChapter: The chapter number last read (defaults to `nil`).
-    ///   - notes: Any user notes (defaults to `nil`).
-    init(
-        mangaID: Int,
-        isFavorite: Bool = false,
-        lastReadChapter: Int? = nil,
-        notes: String? = nil
-    ) {
+    init(mangaID: Int, isFavorite: Bool, lastReadChapter: Int?, notes: String?, isComplete: Bool, volumesOwnedCount: Int, readingVolume: Int?) {
         self.mangaID = mangaID
         self.isFavorite = isFavorite
         self.lastReadChapter = lastReadChapter
         self.notes = notes
+        self.isComplete = isComplete
+        self.volumesOwnedCount = volumesOwnedCount
+        self.readingVolume = readingVolume
     }
+}
 
-    // MARK: - Identifiable Conformance
-
-    /// `Identifiable` protocol requirement, using `mangaID` as the identifier.
-    var id: Int { mangaID }
-
-    // MARK: - Codable Conformance
+extension UserManga: Codable {
     private enum CodingKeys: String, CodingKey {
-        case mangaID, isFavorite, lastReadChapter, notes
+        case mangaID, isFavorite, lastReadChapter, notes, isComplete, volumesOwnedCount, readingVolume
     }
 
-    /// Initialize from JSON decoder
-    required convenience init(from decoder: Decoder) throws {
+    convenience init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let mangaID = try container.decode(Int.self, forKey: .mangaID)
         let isFavorite = try container.decode(Bool.self, forKey: .isFavorite)
         let lastReadChapter = try container.decodeIfPresent(Int.self, forKey: .lastReadChapter)
         let notes = try container.decodeIfPresent(String.self, forKey: .notes)
-        self.init(mangaID: mangaID, isFavorite: isFavorite, lastReadChapter: lastReadChapter, notes: notes)
+        let isComplete = try container.decode(Bool.self, forKey: .isComplete)
+        let volumesOwnedCount = try container.decode(Int.self, forKey: .volumesOwnedCount)
+        let readingVolume = try container.decodeIfPresent(Int.self, forKey: .readingVolume)
+        self.init(
+            mangaID: mangaID,
+            isFavorite: isFavorite,
+            lastReadChapter: lastReadChapter,
+            notes: notes,
+            isComplete: isComplete,
+            volumesOwnedCount: volumesOwnedCount,
+            readingVolume: readingVolume
+        )
     }
 
-    /// Encode to JSON encoder
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(mangaID, forKey: .mangaID)
         try container.encode(isFavorite, forKey: .isFavorite)
         try container.encodeIfPresent(lastReadChapter, forKey: .lastReadChapter)
         try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encode(isComplete, forKey: .isComplete)
+        try container.encode(volumesOwnedCount, forKey: .volumesOwnedCount)
+        try container.encodeIfPresent(readingVolume, forKey: .readingVolume)
     }
 }
- 

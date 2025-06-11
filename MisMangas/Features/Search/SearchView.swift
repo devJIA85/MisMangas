@@ -8,48 +8,53 @@
 import SwiftUI
 
 struct SearchView: View {
-    // MARK: - ViewModel
     @StateObject private var viewModel = SearchViewModel()
 
     var body: some View {
         NavigationStack {
-            // Formulario de búsqueda avanzada
             Form {
-                // Sección para título
                 Section("Título") {
                     TextField("Buscar por título...", text: $viewModel.searchTitle)
                 }
-                // Sección para autor
                 Section("Autor") {
                     TextField("Nombre (primer)", text: $viewModel.searchAuthorFirstName)
                     TextField("Apellido", text: $viewModel.searchAuthorLastName)
                 }
-                // Sección para opciones de búsqueda
                 Section("Opciones de búsqueda") {
                     Toggle("Buscar en título (contains)", isOn: $viewModel.searchContains)
                 }
-                // Sección para géneros (coma separados)
                 Section("Géneros (coma separados)") {
                     TextField("e.g. Action,Drama", text: $viewModel.genreTagsText)
                 }
-                // Sección para temas (coma separados)
                 Section("Temas (coma separados)") {
                     TextField("e.g. Psychological,Mystery", text: $viewModel.themeTagsText)
                 }
-                // Sección para demográficos (coma separados)
                 Section("Demográficos (coma separados)") {
                     TextField("e.g. Shounen,Seinen", text: $viewModel.demographicTagsText)
                 }
-                // Botón para iniciar la búsqueda
                 Section {
                     Button("Buscar") {
                         Task {
-                            await viewModel.performSearch()
+                            let search = CustomSearch(
+                                searchTitle: viewModel.searchTitle,
+                                searchAuthorFirstName: viewModel.searchAuthorFirstName,
+                                searchAuthorLastName: viewModel.searchAuthorLastName,
+                                searchGenres: viewModel.genreTagsText
+                                    .split(separator: ",")
+                                    .map { String($0).trimmingCharacters(in: .whitespaces) },
+                                searchThemes: viewModel.themeTagsText
+                                    .split(separator: ",")
+                                    .map { String($0).trimmingCharacters(in: .whitespaces) },
+                                searchDemographics: viewModel.demographicTagsText
+                                    .split(separator: ",")
+                                    .map { String($0).trimmingCharacters(in: .whitespaces) },
+                                searchContains: viewModel.searchContains
+                            )
+                            await viewModel.performSearch(customSearch: search)
                         }
                     }
                     .disabled(viewModel.isLoading)
                 }
-                // Indicador de carga mientras se realiza la búsqueda
                 if viewModel.isLoading {
                     Section {
                         HStack {
@@ -59,27 +64,37 @@ struct SearchView: View {
                         }
                     }
                 }
-            }
-            .navigationTitle("Búsqueda avanzada")
-            // Lista de resultados debajo del formulario
-            List {
-                // Sección de resultados
-                Section("Resultados") {
-                    ForEach(viewModel.mangas, id: \.id) { manga in
-                        NavigationLink(value: manga.id) {
-                            Text(manga.title)
+                if !viewModel.mangas.isEmpty {
+                    Section("Resultados") {
+                        ForEach(viewModel.mangas, id: \.id) { manga in
+                            NavigationLink {
+                                MangaDetailView(viewModel: MangaDetailViewModel(
+                                    id: manga.id,
+                                    title: manga.title,
+                                    coverURL: URL(string: manga.mainPicture),
+                                    synopsis: manga.sypnosis,
+                                    genres: manga.genres.map(\.genre),
+                                    authors: manga.authors.map { "\($0.firstName) \($0.lastName)" },
+                                    demographic: manga.demographics.first?.demographic,
+                                    themes: manga.themes.map(\.theme),
+                                    chapters: manga.chapters,
+                                    volumes: manga.volumes,
+                                    score: manga.score,
+                                    status: manga.status,
+                                    container: viewModel.container
+                                ))
+                            } label: {
+                                Text(manga.title)
+                            }
                         }
                     }
                 }
             }
-            .navigationDestination(for: Int.self) { id in
-                MangaDetailView(id: id)
-            }
+            .navigationTitle("Búsqueda avanzada")
         }
     }
 }
 
-// Vista previa de SearchView
 struct SearchView_Previews: PreviewProvider {
     static var previews: some View {
         SearchView()
