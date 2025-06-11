@@ -86,11 +86,11 @@ private struct SearchResultRow: View {
                 viewModel: MangaDetailViewModel(
                     id: manga.id,
                     title: manga.title,
-                    coverURL: URL(string: manga.mainPicture ?? ""),
+                    coverURL: URL(string: manga.mainPicture ?? "") ?? URL(string: "https://example.com/default.png")!,
                     synopsis: manga.sypnosis,
                     genres: (manga.genres ?? []).compactMap { $0.genre },
-                    authors: (manga.authors ?? []).map { "\($0.firstName ?? "") \($0.lastName ?? "")" },
-                    demographic: (manga.demographics ?? []).compactMap { $0.demographic },
+                    authors: (manga.authors ?? []).compactMap { "\($0.firstName ?? "") \($0.lastName ?? "")" },
+                    demographic: (manga.demographics ?? []).compactMap { $0.demographic }.first ?? "",
                     themes: (manga.themes ?? []).compactMap { $0.theme },
                     chapters: manga.chapters,
                     volumes: manga.volumes,
@@ -105,7 +105,7 @@ private struct SearchResultRow: View {
     }
 }
 
-struct SearchView_Previews: PreviewProvider {X4
+struct SearchView_Previews: PreviewProvider {
     static var previews: some View {
         SearchView()
             .modelContainer(for: Manga.self, inMemory: true)
