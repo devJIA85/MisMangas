@@ -20,7 +20,9 @@ class SearchViewModel: ObservableObject {
     @Published var genreTagsText: String = ""
     @Published var themeTagsText: String = ""
     @Published var demographicTagsText: String = ""
-
+    @Published var errorMessage: ErrorMessage?
+    
+    
     func performSearch(customSearch criteria: CustomSearch, page: Int = 1, per: Int = 10) async {
         isLoading = true
         defer { isLoading = false }
@@ -29,7 +31,7 @@ class SearchViewModel: ObservableObject {
             let response = try await APIService.shared.searchMangas(customSearch: criteria, page: page, per: per)
             mangas = response.data
         } catch {
-            apiError = error
+            errorMessage = ErrorMessage(message: error.localizedDescription)
             print("❌ Error al buscar mangas:", error)
         }
     }

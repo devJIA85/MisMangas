@@ -10,7 +10,7 @@ import SwiftData
 
 struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
-    @Environment(\.modelContainer) private var container: ModelContainer
+    @Environment(\.modelContext) private var context: ModelContext
 
     var body: some View {
         NavigationStack {
@@ -72,13 +72,22 @@ struct SearchView: View {
                 }
             }
             .navigationTitle("Búsqueda avanzada")
+            .alert(item: $viewModel.errorMessage) { error in
+                Alert(
+                    title: Text("Error"),
+                    message: Text(error.message),
+                    dismissButton: .default(Text("OK")) {
+                        viewModel.errorMessage = nil
+                    }
+                )
+            }
         }
     }
 }
 
 private struct SearchResultRow: View {
     let manga: Manga
-    @Environment(\.modelContainer) private var container: ModelContainer
+    @Environment(\.modelContext) private var context: ModelContext
 
     var body: some View {
         NavigationLink {
@@ -96,7 +105,7 @@ private struct SearchResultRow: View {
                     volumes: manga.volumes,
                     score: manga.score,
                     status: manga.status,
-                    container: container
+                    context: context
                 )
             )
         } label: {
@@ -108,6 +117,11 @@ private struct SearchResultRow: View {
 struct SearchView_Previews: PreviewProvider {
     static var previews: some View {
         SearchView()
-            .modelContainer(for: Manga.self, inMemory: true)
+            .modelContainer(for: UserManga.self, inMemory: true)
     }
+}
+
+struct ErrorMessage: Identifiable {
+    let id = UUID()
+    let message: String
 }

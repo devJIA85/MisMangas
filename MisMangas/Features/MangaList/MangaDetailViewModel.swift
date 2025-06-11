@@ -38,7 +38,6 @@ class MangaDetailViewModel: ObservableObject {
     @Published var isCached: Bool = false
 
     // MARK: - SwiftData
-    private let container: ModelContainer
     private let context: ModelContext
 
     // MARK: - Init
@@ -55,7 +54,7 @@ class MangaDetailViewModel: ObservableObject {
         volumes: Int?,
         score: Double?,
         status: String?,
-        container: ModelContainer
+        context: ModelContext
     ) {
         self.id = id
         self.title = title
@@ -69,8 +68,7 @@ class MangaDetailViewModel: ObservableObject {
         self.volumes = volumes
         self.score = score
         self.status = status
-        self.container = container
-        self.context = container.mainContext
+        self.context = context
         self.checkIfCached()
     }
 

@@ -140,13 +140,22 @@ final class APIService {
         page: Int = 1,
         per: Int = 10
     ) async throws -> PaginatedResponse<Manga> {
-        let url = Constants.baseURL.appendingPathComponent("/search/manga")
+        guard var comps = URLComponents(url: Constants.baseURL.appendingPathComponent("/search/manga"), resolvingAgainstBaseURL: false) else {
+            throw APIError.invalidURL
+        }
+        comps.queryItems = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "per", value: String(per))
+        ]
+        guard let url = comps.url else {
+            throw APIError.invalidURL
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(customSearch)
-        return try await performRequest(url)
+        return try await performRequest(request)
     }
 
     // MARK: - Helpers genéricos de petición
@@ -155,6 +164,15 @@ final class APIService {
     func performRequest<T: Decodable>(_ url: URL) async throws -> T {
         var request = URLRequest(url: url)
         request.setValue(Constants.appToken, forHTTPHeaderField: "App-Token")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)
+        }
+        return try decoder.decode(T.self, from: data)
+    }
+
+    /// Ejecuta petición con URLRequest y decodifica a un tipo Decodable.
+    func performRequest<T: Decodable>(_ request: URLRequest) async throws -> T {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw APIError.statusCode((response as? HTTPURLResponse)?.statusCode ?? -1)

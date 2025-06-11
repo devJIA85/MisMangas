@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MangaListView: View {
     @StateObject private var viewModel = MangaListViewModel()
+    @Environment(\.modelContext) private var context: ModelContext
 
     var body: some View {
         NavigationStack {
@@ -49,7 +51,23 @@ struct MangaListView: View {
                 Text(viewModel.apiError?.localizedDescription ?? "Error desconocido")
             }
             .navigationDestination(for: Int.self) { mangaID in
-                MangaDetailView(id: mangaID)
+                MangaDetailView(
+                    viewModel: MangaDetailViewModel(
+                        id: mangaID,
+                        title: "",
+                        coverURL: nil,
+                        synopsis: nil,
+                        genres: [],
+                        authors: [],
+                        demographic: nil,
+                        themes: [],
+                        chapters: nil,
+                        volumes: nil,
+                        score: nil,
+                        status: nil,
+                        context: context
+                    )
+                )
             }
         }
         .task {

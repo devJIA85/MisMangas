@@ -1,31 +1,32 @@
-//
-//  PaginatedResponse.swift
-//  MisMangas
-//
-//  Created by Juan Ignacio Antolini on 06/06/2025.
-//
+import XCTest
+@testable import MisMangas
 
-import Foundation
-
-/// Representa una respuesta paginada genérica devuelta por los endpoints `/list/*`.
-/// - Note: Hace *decode* automático usando las claves `items` y `metadata`.
-struct PaginatedResponse<T: Decodable>: Decodable {
-    /// Array de resultados del tipo solicitado.
-    let data: [T]
-
-    /// Información sobre la paginación.
-    let metadata: Metadata
-
-    /// Mapea la clave `items` → `data`
-    private enum CodingKeys: String, CodingKey {
-        case data = "items"
-        case metadata
-    }
-
-    /// Estructura de la metadata (total de ítems, página actual, ítems por página).
-    struct Metadata: Codable {
-        let total: Int
-        let page: Int
-        let per: Int
+final class PaginatedResponseTests: XCTestCase {
+    func testPaginatedResponseDecoding() throws {
+        struct Dummy: Decodable, Equatable {
+            let id: Int
+            let name: String
+        }
+        
+        let json = """
+        {
+            "items": [
+                { "id": 1, "name": "First" },
+                { "id": 2, "name": "Second" }
+            ],
+            "metadata": {
+                "total": 2,
+                "page": 1,
+                "per": 10
+            }
+        }
+        """.data(using: .utf8)!
+        
+        let decoded = try JSONDecoder().decode(PaginatedResponse<Dummy>.self, from: json)
+        
+        XCTAssertEqual(decoded.data, [Dummy(id: 1, name: "First"), Dummy(id: 2, name: "Second")])
+        XCTAssertEqual(decoded.metadata.total, 2)
+        XCTAssertEqual(decoded.metadata.page, 1)
+        XCTAssertEqual(decoded.metadata.per, 10)
     }
 }
