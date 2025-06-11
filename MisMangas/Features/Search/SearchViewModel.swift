@@ -31,8 +31,15 @@ class SearchViewModel: ObservableObject {
             let response = try await APIService.shared.searchMangas(customSearch: criteria, page: page, per: per)
             mangas = response.data
         } catch {
-            errorMessage = ErrorMessage(message: error.localizedDescription)
-            print("❌ Error al buscar mangas:", error)
+            print("""
+            [❌ Error] performSearch
+            Criteria: \(criteria)
+            Page: \(page)
+            Per: \(per)
+            Error: \(error)
+            Error Type: \(type(of: error))
+            """)
+            errorMessage = ErrorMessage(message: "Ocurrió un error al buscar mangas: \(error.localizedDescription)")
         }
     }
 }
