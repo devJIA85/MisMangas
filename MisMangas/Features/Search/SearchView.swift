@@ -10,6 +10,7 @@ import SwiftData
 
 struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
+    @Environment(\.modelContainer) private var container: ModelContainer
 
     var body: some View {
         NavigationStack {
@@ -33,6 +34,7 @@ struct SearchView: View {
                 Section("Demográficos (coma separados)") {
                     TextField("e.g. Shounen,Seinen", text: $viewModel.demographicTagsText)
                 }
+
                 Section {
                     Button("Buscar") {
                         Task {
@@ -40,15 +42,9 @@ struct SearchView: View {
                                 searchTitle: viewModel.searchTitle,
                                 searchAuthorFirstName: viewModel.searchAuthorFirstName,
                                 searchAuthorLastName: viewModel.searchAuthorLastName,
-                                searchGenres: viewModel.genreTagsText
-                                    .split(separator: ",")
-                                    .map { String($0).trimmingCharacters(in: .whitespaces) },
-                                searchThemes: viewModel.themeTagsText
-                                    .split(separator: ",")
-                                    .map { String($0).trimmingCharacters(in: .whitespaces) },
-                                searchDemographics: viewModel.demographicTagsText
-                                    .split(separator: ",")
-                                    .map { String($0).trimmingCharacters(in: .whitespaces) },
+                                searchGenres: viewModel.genreTagsText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) },
+                                searchThemes: viewModel.themeTagsText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) },
+                                searchDemographics: viewModel.demographicTagsText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) },
                                 searchContains: viewModel.searchContains
                             )
                             await viewModel.performSearch(customSearch: search)
@@ -56,6 +52,7 @@ struct SearchView: View {
                     }
                     .disabled(viewModel.isLoading)
                 }
+
                 if viewModel.isLoading {
                     Section {
                         HStack {
@@ -65,10 +62,11 @@ struct SearchView: View {
                         }
                     }
                 }
+
                 if !viewModel.mangas.isEmpty {
                     Section("Resultados") {
                         ForEach(viewModel.mangas, id: \.id) { manga in
-                            SearchResultRow(manga: manga, container: $viewModel.container)
+                            SearchResultRow(manga: manga)
                         }
                     }
                 }
@@ -80,7 +78,7 @@ struct SearchView: View {
 
 private struct SearchResultRow: View {
     let manga: Manga
-    let container: ModelContainer
+    @Environment(\.modelContainer) private var container: ModelContainer
 
     var body: some View {
         NavigationLink {
@@ -88,12 +86,12 @@ private struct SearchResultRow: View {
                 viewModel: MangaDetailViewModel(
                     id: manga.id,
                     title: manga.title,
-                    coverURL: URL(string: manga.mainPicture ?? <#default value#>),
+                    coverURL: URL(string: manga.mainPicture ?? ""),
                     synopsis: manga.sypnosis,
-                    genres: manga.genres.map(\.genre),
-                    authors: manga.authors.map { "\($0.firstName) \($0.lastName)" },
-                    demographic: manga.demographics?.first?.demographic,
-                    themes: manga.themes.map(\.theme),
+                    genres: (manga.genres ?? []).compactMap { $0.genre },
+                    authors: (manga.authors ?? []).map { "\($0.firstName ?? "") \($0.lastName ?? "")" },
+                    demographic: (manga.demographics ?? []).compactMap { $0.demographic },
+                    themes: (manga.themes ?? []).compactMap { $0.theme },
                     chapters: manga.chapters,
                     volumes: manga.volumes,
                     score: manga.score,
@@ -107,8 +105,9 @@ private struct SearchResultRow: View {
     }
 }
 
-struct SearchView_Previews: PreviewProvider {
+struct SearchView_Previews: PreviewProvider {X4
     static var previews: some View {
         SearchView()
+            .modelContainer(for: Manga.self, inMemory: true)
     }
 }
