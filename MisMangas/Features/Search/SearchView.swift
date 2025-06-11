@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
@@ -67,7 +68,7 @@ struct SearchView: View {
                 if !viewModel.mangas.isEmpty {
                     Section("Resultados") {
                         ForEach(viewModel.mangas, id: \.id) { manga in
-                            SearchResultRow(manga: manga, container: viewModel.container)
+                            SearchResultRow(manga: manga, container: $viewModel.container)
                         }
                     }
                 }
@@ -87,11 +88,11 @@ private struct SearchResultRow: View {
                 viewModel: MangaDetailViewModel(
                     id: manga.id,
                     title: manga.title,
-                    coverURL: URL(string: manga.mainPicture),
+                    coverURL: URL(string: manga.mainPicture ?? <#default value#>),
                     synopsis: manga.sypnosis,
                     genres: manga.genres.map(\.genre),
                     authors: manga.authors.map { "\($0.firstName) \($0.lastName)" },
-                    demographic: manga.demographics.first?.demographic,
+                    demographic: manga.demographics?.first?.demographic,
                     themes: manga.themes.map(\.theme),
                     chapters: manga.chapters,
                     volumes: manga.volumes,
