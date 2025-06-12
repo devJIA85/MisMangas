@@ -1,0 +1,638 @@
+{
+	"info": {
+		"_postman_id": "ee590ef3-46c7-456a-bce6-8edb111deb36",
+		"name": "MyManga API",
+		"description": "Colección de ejemplos de llamadas a los _endpoints_ de la API MyManga.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "6169207"
+	},
+	"item": [
+		{
+			"name": "Listado de mangas (P)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/mangas",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"mangas"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listado mangas página 2 (P)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/mangas?page=2&per=30",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"mangas"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "2"
+						},
+						{
+							"key": "per",
+							"value": "30"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listado Mejores Mangas (P)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/bestMangas",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"bestMangas"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listado Autores",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/authors",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"authors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listado Demográficas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/demographics",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"demographics"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listado Géneros",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/genres",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"genres"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listado Temáticas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/themes",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"themes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mangas por Género (P)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/mangaByGenre/romance",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"mangaByGenre",
+						"romance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mangas por Temática (P)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/mangaByTheme/school",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"mangaByTheme",
+						"school"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mangas por Demografía (P)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/mangaByDemographic/Seinen",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"mangaByDemographic",
+						"Seinen"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mangas por Autor (P)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/list/mangaByAuthor/998C1B16-E3DB-47D1-8157-8389B5345D03?page=1&per=20",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"list",
+						"mangaByAuthor",
+						"998C1B16-E3DB-47D1-8157-8389B5345D03"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "per",
+							"value": "20"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Búsqueda Manga BEGIN",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/search/mangasBeginsWith/dragon",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"search",
+						"mangasBeginsWith",
+						"dragon"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Búsqueda Manga CONTAINS",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/search/mangasContains/ball",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"search",
+						"mangasContains",
+						"ball"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Búsqueda Autor",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/search/author/toriya",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"search",
+						"author",
+						"toriya"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Búsqueda Manga por ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/search/manga/42",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"search",
+						"manga",
+						"42"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Búsqueda Manga CUSTOM (P)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"searchTitle\": \"dragon\",\n    \"searchDemographics\": [\"Shounen\", \"Seinen\"],\n    \"searchContains\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/search/manga",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"search",
+						"manga"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Crear Usuario",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "App-Token",
+						"value": "sLGH38NhEJ0_anlIWwhsz1-LarClEohiAHQqayF0FY",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"jcfmunoz@icloud.com\",\n    \"password\": \"12345678\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/users",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Usuario Login",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "12345678",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "jcfmunoz@icloud.com",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "App-Token",
+						"value": "sLGH38NhEJ0_anlIWwhsz1-LarClEohiAHQqayF0FY",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"jcfmunoz@icloud.com\",\n    \"password\": \"12345678\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/users/login",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Usuario Token Renew",
+			"request": {
+				"auth": {
+					"type": "bearer"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "App-Token",
+						"value": "sLGH38NhEJ0_anlIWwhsz1-LarClEohiAHQqayF0FY",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/users/renew",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"users",
+						"renew"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Añadir Manga Colección",
+			"request": {
+				"auth": {
+					"type": "bearer"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "App-Token",
+						"value": "sLGH38NhEJ0_anlIWwhsz1-LarClEohiAHQqayF0FY",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"manga\": 42,\n    \"completeCollection\": false,\n    \"volumesOwned\": [1,2,3,4,5,6],\n    \"readingVolume\": 4\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/collection/manga",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"collection",
+						"manga"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Colección Usuario",
+			"request": {
+				"auth": {
+					"type": "bearer"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "App-Token",
+						"value": "sLGH38NhEJ0_anlIWwhsz1-LarClEohiAHQqayF0FY",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/collection/manga",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"collection",
+						"manga"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Colección Usuario 1 Manga",
+			"request": {
+				"auth": {
+					"type": "bearer"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "App-Token",
+						"value": "sLGH38NhEJ0_anlIWwhsz1-LarClEohiAHQqayF0FY",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/collection/manga/42",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"collection",
+						"manga",
+						"42"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Borrar Colección Usuario 1 Manga",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "App-Token",
+						"value": "sLGH38NhEJ0_anlIWwhsz1-LarClEohiAHQqayF0FY",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://mymanga-acacademy-5607149ebe3d.herokuapp.com/collection/manga/42",
+					"protocol": "https",
+					"host": [
+						"mymanga-acacademy-5607149ebe3d",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"collection",
+						"manga",
+						"42"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

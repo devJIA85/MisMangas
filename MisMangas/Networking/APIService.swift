@@ -6,11 +6,24 @@
 import Foundation
 
 /// Errores posibles de la API de MisMangas.
-enum APIError: Error {
+enum APIError: Error, LocalizedError {
     case invalidURL
     case statusCode(Int)
     case decodingFailed
     case requestFailed(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "La URL es inválida. Verifica la configuración de la API."
+        case .statusCode(let code):
+            return "Error del servidor. Código de estado HTTP: \(code)."
+        case .decodingFailed:
+            return "No se pudo decodificar la respuesta del servidor."
+        case .requestFailed(let error):
+            return "La petición falló: \(error.localizedDescription)"
+        }
+    }
 }
 
 /// Servicio encargado de manejar las llamadas a la API de mangas y autores.
@@ -18,6 +31,8 @@ final class APIService {
     /// Instancia compartida para acceder al servicio desde cualquier parte de la app.
     static let shared = APIService()
     private init() {}
+
+    private let useLocalData = true // Cambia a false para usar la API real
 
     /// JSONDecoder configurado para convertir snake_case y decodificar fechas ISO8601.
     private let decoder: JSONDecoder = {
@@ -34,15 +49,19 @@ final class APIService {
     /// - Parameter per: elementos por página (por defecto 10)
     /// - Returns: `PaginatedResponse<Manga>` con metadata y datos
     func fetchAllMangas(page: Int = 1, per: Int = 10) async throws -> PaginatedResponse<Manga> {
-        guard var comps = URLComponents(url: Constants.baseURL.appendingPathComponent("/list/mangas"), resolvingAgainstBaseURL: false) else {
-            throw APIError.invalidURL
+        if useLocalData {
+            return try loadLocalJSON(filename: "mangas", as: PaginatedResponse<Manga>.self)
+        } else {
+            guard var comps = URLComponents(url: Constants.baseURL.appendingPathComponent("/list/mangas"), resolvingAgainstBaseURL: false) else {
+                throw APIError.invalidURL
+            }
+            comps.queryItems = [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "per",  value: String(per))
+            ]
+            let url = comps.url!
+            return try await performRequest(url)
         }
-        comps.queryItems = [
-            URLQueryItem(name: "page", value: String(page)),
-            URLQueryItem(name: "per",  value: String(per))
-        ]
-        let url = comps.url!
-        return try await performRequest(url)
     }
 
     /// GET /list/bestMangas?page=...&per=... – Mangas mejor valorados.
